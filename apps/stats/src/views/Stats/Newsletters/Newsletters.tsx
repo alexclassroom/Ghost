@@ -139,12 +139,25 @@ const Newsletters: React.FC = () => {
     // Create subscribers data from newsletter subscriber stats
     const subscribersData = useMemo(() => {
         if (!subscriberStatsData?.stats?.[0]?.deltas || subscriberStatsData.stats[0].deltas.length === 0) {
+            // If no deltas, create a flat line using the total subscriber count
+            const totalSubscribers = selectedNewsletter?.count?.active_members || 0;
+            if (totalSubscribers > 0) {
+                // Create two data points for a flat line over the date range
+                const endDate = new Date();
+                const startDate = new Date();
+                startDate.setDate(endDate.getDate() - range);
+                
+                return [
+                    {date: startDate.toISOString().split('T')[0], value: totalSubscribers},
+                    {date: endDate.toISOString().split('T')[0], value: totalSubscribers}
+                ];
+            }
             return [];
         }
 
         // Convert to the required format - already in the correct format
         return subscriberStatsData.stats[0].deltas;
-    }, [subscriberStatsData]);
+    }, [subscriberStatsData, selectedNewsletter, range]);
 
     // Convert string dates to Date objects for AvgsDataItem compatibility
     const avgsData: AvgsDataItem[] = newsletterStats.map(stat => ({
@@ -156,7 +169,7 @@ const Newsletters: React.FC = () => {
     const isKPIsLoading = isNewslettersLoading || isSubscriberStatsLoading || isStatsLoading;
     const isTableLoading = isStatsLoading || !newsletterStatsData;
 
-    const pageData = isKPIsLoading ? undefined : (selectedNewsletterId && subscribersData.length > 1 && newsletterStats.length > 1 ? ['data exists'] : []);
+    const pageData = isKPIsLoading ? undefined : (selectedNewsletterId && newsletterStats.length > 0 ? ['data exists'] : []);
 
     if (!appSettings?.newslettersEnabled) {
         return (
