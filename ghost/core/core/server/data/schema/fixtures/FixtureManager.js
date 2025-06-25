@@ -59,6 +59,44 @@ class FixtureManager {
         return matchedObj;
     }
 
+    static processFixtures(fixtures) {
+        const placeholderMap = {
+            __OWNER_USER_ID__: models.User.generateId()
+        };
+
+        const replacePlaceholders = (obj, replacements) => {
+            if (obj === null || obj === undefined) {
+                return obj;
+            }
+
+            if (typeof obj === 'string') {
+                return replacements[obj] !== undefined ? replacements[obj] : obj;
+            }
+
+            if (Array.isArray(obj)) {
+                return obj.map(item => replacePlaceholders(item, replacements));
+            }
+
+            if (typeof obj === 'object') {
+                const result = {};
+
+                for (const key in obj) {
+                    if (obj.hasOwnProperty(key)) {
+                        const newKey = replacements[key] !== undefined ? replacements[key] : key;
+
+                        result[newKey] = replacePlaceholders(obj[key], replacements);
+                    }
+                }
+
+                return result;
+            }
+
+            return obj;
+        };
+
+        return replacePlaceholders(fixtures, placeholderMap);
+    }
+
     /**
      * Add All Fixtures
      *
